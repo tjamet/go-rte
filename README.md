@@ -75,6 +75,71 @@ without calling out — a half-specified and an inverted range — are returned 
 `tempo.ErrDateRangeIncomplete` and `tempo.ErrDateRangeInverted`, usable with
 `errors.Is`.
 
+## Serving days from a cache
+
+Tempo history is immutable once published, so almost every question can be
+answered without calling RTE. `tempo.Cache` reads a `tempo.Store` and fills it
+from the API in 360-day sweeps; `tempo.Handler` puts one day per URL in front
+of it.
+
+```go
+cache := &tempo.Cache{
+	Service: client.Tempo,
+	Store:   &tempo.FileStore{Root: "/var/cache/tempo"},
+}
+mux.Handle("/tempo/", http.StripPrefix("/tempo", &tempo.Handler{Cache: cache}))
+```
+
+```
+GET /tempo/2026/08/10
+
+{"date":"2026-08-10","colour":"BLUE",
+ "start":"2026-08-10T00:00:00+02:00","end":"2026-08-11T00:00:00+02:00"}
+```
+
+The latest day served is today, or tomorrow once Paris has passed 11:00, which
+is when RTE publishes it. Beyond that is `400`: the day does not exist yet.
+Before the archive begins, or a hole inside it, is `404`. An upstream failure is
+`502`, and giving up while waiting for a fetch is `504`.
+
+Substitute `tempo.S3Store` to share one cache between processes:
+
+```go
+Store: &tempo.S3Store{Client: s3.NewFromConfig(cfg), Bucket: "tempo", Prefix: "cache"},
+```
+
+### Why the window is 360 days wide
+
+The rate limit counts calls, not days, so asking for a single day is the worst
+possible use of one. A miss centres 360 days on the day requested, slides the
+range back if it would reach past what has been published — a short call costs
+the same as a full one — and trims the already-cached runs off each end. Cached
+days in the *middle* stay in the range, because re-fetching them is free while
+splitting the range around them would spend a second call.
+
+Concurrent misses are collapsed by coverage rather than by exact range, so
+twenty requests for neighbouring days cost one call rather than twenty, and a
+token bucket gates whatever survives that. A request that gives up does not
+cancel the fetch it was waiting on: the next caller finds the cache warm.
+
+A day served from cache is also answered immediately and *then* used to widen
+the cache in the background, so a caller walking through history keeps finding
+the days it is about to ask for.
+
+### What is never cached
+
+Degraded-mode values. RTE marks a provisional colour with `fallback`, and it may
+still be revised, so it is served but never written — the handler returns
+`"fallback":true` with `Cache-Control: no-store`, and the day is fetched again
+next time. Everything the cache does hold is final, which is why entries have no
+expiry. A published past day is served `immutable`; today and tomorrow get a
+short max-age.
+
+Absence is cached too, as `{"absent":true}`, so a hole in the archive is asked
+about once rather than on every request. Pre-history is recorded as a single
+`floor.json` instead of thousands of absent days, and it survives a restart, so
+a fresh process does not rediscover it.
+
 ## Authentication seam
 
 Everything reaches RTE through an `auth.Authenticator`:
@@ -98,8 +163,12 @@ client := rte.NewWithAuthenticator(auth.StaticToken(myToken), rte.Options{})
 rte/            facade wiring authenticator + HTTP client + domain services
 shared/auth     Authenticator, StaticToken, ClientCredentials, Transport
 shared/rtehttp  shared HTTP plumbing and typed APIError
-domains/tempo   the Tempo Like Supply Contract API
+domains/tempo   the Tempo Like Supply Contract API, its cache and its handler
 ```
+
+Within `domains/tempo`, `service.go` and `rest.go` reach the API, `date.go`
+and `window.go` decide which days to ask for, `store*.go` persist them, and
+`cache.go` and `handler.go` serve them.
 
 Further RTE APIs become new packages under `domains/` plus a field on
 `rte.Client`; the auth and HTTP layers are already shared.
