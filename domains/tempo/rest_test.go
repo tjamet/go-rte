@@ -116,8 +116,8 @@ func TestColourAtFindsTheDayCoveringAnInstant(t *testing.T) {
 	cs, err := decodeJSONCalendars(readFixture(t, "TLC-RG02.v1.0.1.json"))
 	require.NoError(t, err)
 
-	expectColourAt(t, cs, "2016-03-06T00:00:00+01:00", Blue) // exactly the start boundary
-	expectColourAt(t, cs, "2016-03-06T18:30:00+01:00", Blue) // mid-day
+	expectColourAt(t, cs, "2016-03-06T00:00:00+01:00", Blue)  // exactly the start boundary
+	expectColourAt(t, cs, "2016-03-06T18:30:00+01:00", Blue)  // mid-day
 	expectColourAt(t, cs, "2016-03-07T00:00:00+01:00", White) // end is exclusive
 
 	_, ok := cs.ColourAt(at(t, "2020-01-01T00:00:00+01:00"))
