@@ -40,6 +40,21 @@ func ParseDate(year, month, day string) (Date, error) {
 	return DateOf(parsed, time.UTC), nil
 }
 
+// MarshalText renders the day as YYYY-MM-DD, so a Date is an ISO string
+// wherever encoding/json meets one — the floor marker and the handler response
+// alike.
+func (d Date) MarshalText() ([]byte, error) { return []byte(d.String()), nil }
+
+// UnmarshalText parses the YYYY-MM-DD form written by MarshalText.
+func (d *Date) UnmarshalText(text []byte) error {
+	parsed, err := time.Parse(time.DateOnly, string(text))
+	if err != nil {
+		return fmt.Errorf("tempo: parse date: %w", err)
+	}
+	*d = DateOf(parsed, time.UTC)
+	return nil
+}
+
 // Key is where the day is cached, relative to the store root.
 func (d Date) Key() string { return d.path() + ".json" }
 
