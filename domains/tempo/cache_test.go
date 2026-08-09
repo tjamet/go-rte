@@ -350,6 +350,44 @@ func TestCacheReadsTheFloorLeftByAPreviousProcess(t *testing.T) {
 	assert.Zero(t, api.callCount())
 }
 
+// A hit answers from the cache and then widens it, so a caller walking
+// backwards through history keeps finding the days it is about to ask for.
+func TestCacheWidensItselfBehindAHit(t *testing.T) {
+	api, store := newFakeAPI(t), newMemoryStore()
+	cache := newCache(t, api, store)
+	// The first miss fetches 2019-12-18 to 2020-12-11.
+	_, err := cache.Day(context.Background(), Date{2020, time.June, 15})
+	require.NoError(t, err)
+	edge := Date{2019, time.December, 18}
+	require.True(t, store.has(edge.Key()))
+
+	got, err := cache.Day(context.Background(), edge)
+
+	require.NoError(t, err)
+	assert.Equal(t, colourFor(edge), got.Colour)
+	assert.Eventually(t, func() bool { return store.has("2019/06/21.json") }, time.Second, time.Millisecond,
+		"a hit at the edge should pull the neighbouring window in behind it")
+}
+
+// A window wholly below the archive teaches nothing about where the archive
+// begins, so every day of it is marked absent instead. The point is that the
+// second request is answered without calling out: otherwise a day nobody can
+// answer would be asked about for ever.
+func TestCacheRecordsAWindowBelowTheArchiveAsAbsent(t *testing.T) {
+	api, store := newFakeAPI(t), newMemoryStore()
+	cache := newCache(t, api, store)
+
+	_, err := cache.Day(context.Background(), Date{2012, time.January, 1})
+
+	assert.ErrorIs(t, err, ErrNoData)
+	assert.False(t, store.has(FloorKey), "an empty answer says nothing about where data starts")
+
+	_, err = cache.Day(context.Background(), Date{2012, time.January, 1})
+
+	assert.ErrorIs(t, err, ErrNoData)
+	assert.Equal(t, 1, api.callCount())
+}
+
 func TestCacheCollapsesConcurrentMissesIntoOneCall(t *testing.T) {
 	api, store := newFakeAPI(t), newMemoryStore()
 	api.release = make(chan struct{})
