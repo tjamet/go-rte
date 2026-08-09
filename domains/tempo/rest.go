@@ -8,6 +8,23 @@ import (
 	"time"
 )
 
+// decodeCalendars turns a response body into domain calendars, choosing the
+// decoder from the response content type. We always ask for JSON, but the
+// endpoint also publishes a legacy XML representation and may answer with it.
+func decodeCalendars(body []byte, contentType string) (Calendars, error) {
+	if isXML(contentType) {
+		return decodeXMLCalendars(body)
+	}
+	return decodeJSONCalendars(body)
+}
+
+func isXML(contentType string) bool {
+	mediaType, _, _ := strings.Cut(contentType, ";")
+	mediaType = strings.TrimSpace(strings.ToLower(mediaType))
+	return mediaType == "application/xml" || mediaType == "text/xml" ||
+		strings.HasSuffix(mediaType, "+xml")
+}
+
 // oneOrMany decodes a JSON value that may be either a single object or an array
 // of objects into a slice. RTE uses both shapes for the same field: the live API
 // returns "tempo_like_calendars" as an object where Swagger.json declares an

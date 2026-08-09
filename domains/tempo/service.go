@@ -86,7 +86,7 @@ func (s *Service) Calendars(ctx context.Context, q Query) (Calendars, error) {
 		return nil, err
 	}
 
-	calendars, err := decodeJSONCalendars(resp.Body)
+	calendars, err := decodeCalendars(resp.Body, resp.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("tempo: %w", err)
 	}
