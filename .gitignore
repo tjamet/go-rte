@@ -1,0 +1,4 @@
+# Build inputs, not source: the RTE sample archive and its extracted contents.
+# The fixtures the tests actually use are copied into domains/tempo/testdata/.
+/Samples
+/zip_tlc/

@@ -1,0 +1,230 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"title": "Tempo Like Supply Contract",
+		"description": "Signal providing the characteristics of TEMPO type days. This signal defines the coloured days identified in the TEMPO regulated rates. It is made up of 40 white days and 20 red days. The other days are blue. It is published the day before.",
+		"version": "1.1"
+	},
+	"basePath": "/open_api/tempo_like_supply_contract/v1",
+	"host": "digital.iservices.rte-france.com",
+	"schemes": [
+		"https"
+	],
+	"consumes": [
+		"application/json"
+	],
+	"produces": [
+		"application/json"
+	],
+	"paths": {
+		"/tempo_like_calendars": {
+			"get": {
+				"description": "This resource is for retrieving the colours per day of the various Tempo type supply packages. The Tempo type electricity supply packages have different price levels which vary depending on the time and day of the year. The red days represent periods of the year during which consumption is high. The white days represent intermediary consumption levels, while the blue days represent periods when consumption is at its lowest. The price for each type of day is different for each supplier which offers this type of package. Every day, RTE publishes the colour for the following day. This applies to all consumers who have selected this Tempo type supply package, irrespective of their supplier.",
+				"operationId": "001",
+				"consumes": [
+					"application/json"
+				],
+				"produces": [
+					"application/json",
+					"application/xml"
+				],
+				"parameters": [
+					{
+						"name": "start_date",
+						"in": "query",
+						"description": "Start date for data requested (YYYY-MM-DDThh:mm:sszzzzzz)",
+						"required": false,
+						"type": "string",
+						"format": "date-time"
+					},
+					{
+						"name": "end_date",
+						"in": "query",
+						"description": "End date for data requested (YYYY-MM-DDThh:mm:sszzzzzz)",
+						"required": false,
+						"type": "string",
+						"format": "date-time"
+					},
+					{
+						"name": "fallback_status",
+						"in": "query",
+						"description": "Degraded mode (true-false)",
+						"required": false,
+						"type": "boolean"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/tempo_like_calendars_obj"
+						}
+					},
+					"400": {
+						"description": "TMPLIKSUPCON_TMPLIKCAL_F01 - If one of the fields 'start_date' or 'end_date' is used, the two fields are mandatory. Please used either fields or neither.    \n    \nTMPLIKSUPCON_TMPLIKCAL_F02 - The field 'start_date' in the API input is more recently than the field 'end_date'. Please correct the values of these fields.    \n    \nTMPLIKSUPCON_TMPLIKCAL_F03 - The API does not provide feedback on such a long period in one call. To retrieve all the data please make it with several calls to the API.    \n    \nTMPLIKSUPCON_TMPLIKCAL_F04 - The value of 'end_date' field is incorrect. It is not possible to recover data to this term.    \n    \nTMPLIKSUPCON_TMPLIKCAL_F05 - The period filled by fields 'start_date' and 'end_date' is too short to return values. Please check the user guide to verify the minimum period for this API.    \n    \nTMPLIKSUPCON_TMPLIKCAL_F06 - One of the dates in the API input does not follow the format described in the user guide. Please verify compliance with the format for each field.  \n  \nTMPLIKSUPCON_TMPLIKCAL_F07 - One of the enumerated field does not match with the list of expected values.  \n",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"408": {
+						"description": "Request Time-out",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"413": {
+						"description": "Request Entity Too Large",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"414": {
+						"description": "Request-URI Too Long",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"429": {
+						"description": "Too Many Requests",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"503": {
+						"description": "Service Unavailable",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					},
+					"509": {
+						"description": "Bandwidth Limit Exceeded",
+						"schema": {
+							"$ref": "#/definitions/error"
+						}
+					}
+				}
+			}
+		}
+	},
+	"definitions": {
+		"tempo_like_calendars_obj": {
+			"type": "object",
+			"properties": {
+				"tempo_like_calendars": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/tempo_like_calendars"
+					}
+				}
+			}
+		},
+		"tempo_like_calendars": {
+			"type": "object",
+			"properties": {
+				"start_date": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Start date for data requested (YYYY-MM-DDThh:mm:sszzzzzz)"
+				},
+				"end_date": {
+					"type": "string",
+					"format": "date-time",
+					"description": "End date for data requested (YYYY-MM-DDThh:mm:sszzzzzz)"
+				},
+				"values": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/value_tempo_like_calendars"
+					}
+				}
+			}
+		},
+		"value_tempo_like_calendars": {
+			"type": "object",
+			"properties": {
+				"start_date": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Start time interval (YYYY-MM-DDThh:mm:sszzzzzz)"
+				},
+				"end_date": {
+					"type": "string",
+					"format": "date-time",
+					"description": "End time interval (YYYY-MM-DDThh:mm:sszzzzzz)"
+				},
+				"values": {
+					"type": "string",
+					"enum": [
+						"BLUE",
+						"WHITE",
+						"RED"
+					],
+					"description": "Colour of the tempo type package"
+				},
+				"fallback": {
+					"type": "string",
+					"enum": [
+						"true",
+						"false"
+					],
+					"description": "degraded mode (true-false)"
+				},
+				"updated_date": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Date updated (YYYY-MM-DDThh:mm:sszzzzzz)"
+				}
+			}
+		},
+		"error": {
+			"type": "object",
+			"properties": {
+				"error": {
+					"type": "string",
+					"description": "short_name, error's explicit description"
+				},
+				"error_description": {
+					"type": "string",
+					"description": "long name, readable by a user"
+				},
+				"error_uri": {
+					"type": "string",
+					"description": "See the API User Guide or the FAQ on https://data.rte-france.com"
+				},
+				"error_details": {
+					"type":"object",
+					"properties":{
+						"transaction_id":{
+							"type":"string",
+							"description":"unique call identifier, useful in the event of an incident"
+						}
+					}
+				}
+			}
+		}
+	}
+}
