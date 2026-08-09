@@ -82,6 +82,10 @@ func (d Date) Compare(o Date) int {
 	return d.midnightUTC().Compare(o.midnightUTC())
 }
 
+// IsZero reports whether d is the zero Date, which the cache uses to mean "not
+// known yet" for the floor it has not learned.
+func (d Date) IsZero() bool { return d == Date{} }
+
 // Before reports whether d is earlier than o.
 func (d Date) Before(o Date) bool { return d.Compare(o) < 0 }
 
