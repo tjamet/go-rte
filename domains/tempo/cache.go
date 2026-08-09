@@ -435,6 +435,16 @@ func (c *Cache) forget(f *fill) {
 	}
 }
 
+// today is the current Paris calendar day. Days before it are settled; today
+// and tomorrow are not.
+func (c *Cache) today() (Date, error) {
+	loc, err := c.loc()
+	if err != nil {
+		return Date{}, err
+	}
+	return DateOf(c.now(), loc), nil
+}
+
 func (c *Cache) now() time.Time {
 	if c.Now != nil {
 		return c.Now()
