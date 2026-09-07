@@ -113,7 +113,7 @@ func (c *ClientCredentials) exchange(ctx context.Context) (tokenResponse, error)
 	if err != nil {
 		return tokenResponse{}, fmt.Errorf("auth: token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // already fully read below; close error carries nothing actionable
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

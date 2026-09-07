@@ -55,10 +55,14 @@ func (s *FileStore) Put(_ context.Context, key string, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("tempo: create temporary file in %s: %w", dir, err)
 	}
-	defer os.Remove(temp.Name()) // no-op once the rename below has succeeded
+	defer func() {
+		// Best-effort cleanup: a no-op once the rename below succeeds, and
+		// not worth failing Put over if an early return left it behind.
+		_ = os.Remove(temp.Name())
+	}()
 
 	if _, err := temp.Write(data); err != nil {
-		temp.Close()
+		_ = temp.Close() // the write error above is what we report
 		return fmt.Errorf("tempo: write %s: %w", key, err)
 	}
 	if err := temp.Close(); err != nil {

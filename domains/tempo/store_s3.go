@@ -58,7 +58,7 @@ func (s *S3Store) Get(ctx context.Context, key string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tempo: get s3://%s/%s: %w", s.Bucket, s.object(key), err)
 	}
-	defer out.Body.Close()
+	defer func() { _ = out.Body.Close() }() // already fully read below; close error carries nothing actionable
 
 	data, err := io.ReadAll(out.Body)
 	if err != nil {

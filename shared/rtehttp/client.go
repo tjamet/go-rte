@@ -82,7 +82,7 @@ func (c *Client) Do(ctx context.Context, r Request) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("rte: %s %s: %w", r.Method, endpoint, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // already fully read below; close error carries nothing actionable
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
