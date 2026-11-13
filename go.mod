@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/aws/aws-sdk-go-v2 v1.47.8
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.9
-	github.com/aws/smithy-go v1.28.8
+	github.com/aws/smithy-go v1.28.9
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/time v0.16.0
 )
